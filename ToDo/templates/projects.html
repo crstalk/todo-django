@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+<style>
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .page-head h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--deep);
+      margin: 0;
+    }
+    .page-head .count {
+      background: var(--deep);
+      color: var(--check2);
+      font-weight: 700;
+      font-size: .85rem;
+      padding: .3rem .8rem;
+      border-radius: 999px;
+    }
+    .custom-btn {
+    background-color: #00FA9A; /* Чёрный фон */
+    color: #000; /* Белый текст */
+  }
+
+  .custom-btn:hover {
+    background-color: #3CB371; /* При наведении фон станет белым */
+    color: #000; /* Текст останется белым */
+  }
+
+    .task-card {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    background: #464451;
+    color:#f5f5dc;
+    border: 1px solid #dfe9e5;
+    border-radius: 12px;
+    padding: .9rem 1.1rem;
+    margin-bottom: .75rem;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .task-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(14, 43, 42, .1);
+  }
+  .task-check {
+    width: 1.6rem;
+    height: 1.6rem;
+    flex-shrink: 0;
+    border: 2px solid var(--deep-soft);
+    border-radius: 50%;
+  }
+  .task-text {
+    font-weight: 600;
+    color: var(--deep);
+    flex-grow: 1;
+  }
+
+</style>
+
+<div class="page-head">
+    <h1>Мои проекты</h1>
+    <a href="{% url 'todo_app:add_project' %}" class="btn custom-btn">Добавить задачу</a>
+    <span class="count">{{ projects|length }}</span>
+</div>
+
+{% for project in projects %}
+<div class="task-card position-relative">
+    <div class="task-body">
+        <i class="bi bi-battery-full"></i>
+        <span><a class="stretched-link text-decoration-none text-reset" href="{% url 'todo_app:taskprojects' project.id %}">{{ project.name }}</a></span>
+
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

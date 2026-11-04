@@ -1,106 +1,81 @@
 {% extends "base.html" %}
 
-{% block title %}Tasks{% endblock %}
+{% block title %}Задачи{% endblock %}
 
 {% block content %}
 
-<style>
-  .page-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.25rem;
-  }
-  .page-head h1 {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--deep);
-    margin: 0;
-  }
-  .page-head .count {
-    background: var(--deep);
-    color: var(--check);
-    font-weight: 700;
-    font-size: .85rem;
-    padding: .3rem .8rem;
-    border-radius: 999px;
-  }
 
-  .task-card {
-    display: flex;
-    align-items: center;
-    gap: .9rem;
-    background: #fff;
-    border: 1px solid #dfe9e5;
-    border-radius: 12px;
-    padding: .9rem 1.1rem;
-    margin-bottom: .75rem;
-    transition: transform .15s ease, box-shadow .15s ease;
-  }
-  .task-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(14, 43, 42, .1);
-  }
-  .task-check {
-    width: 1.6rem;
-    height: 1.6rem;
-    flex-shrink: 0;
-    border: 2px solid var(--deep-soft);
-    border-radius: 50%;
-  }
-  .task-text {
-    font-weight: 600;
-    color: var(--deep);
-    flex-grow: 1;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    background: #fff;
-    border: 2px dashed #c5d8d2;
-    border-radius: 14px;
-    color: var(--deep-soft);
-  }
-  .empty-state i {
-    font-size: 2.5rem;
-    color: var(--check);
-    background: var(--deep);
-    width: 4rem;
-    height: 4rem;
-    border-radius: 50%;
-    display: inline-grid;
-    place-items: center;
-    margin-bottom: .75rem;
-  }
-  .button_delete {
-    margin-left:auto;
-
-  }
-</style>
-
-<div class="page-head">
+{# ---------- Шапка ---------- #}
+<div class="hero anim">
   <h1>Мои задачи</h1>
-  <span class="count">{{ tasks|length }}</span>
+  <div class="sub">
+    {% if total %}
+      Выполнено {{ done_tasks|length }} из {{ total }}
+      {% if not active_tasks %} — всё готово! 🎉{% endif %}
+    {% else %}
+      Список пока пуст
+    {% endif %}
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track" role="progressbar"
+         aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+      <div class="progress-fill" style="width: {{ progress }}%"></div>
+    </div>
+    <span class="progress-label">{{ progress }}%</span>
+  </div>
 </div>
 
-{% for task in tasks %}
-  <div class="task-card">
-    <span class="task-check"></span>
-    <div class="task-body">
-      <span class="task-text">{{ task }}</span>
-      <small class="task-date">
-        <i class="bi bi-clock"></i> {{ task.date_added|date:"d.m.Y H:i" }}
-      </small>
+{# ---------- Быстрое добавление (отправляет в add_task) ---------- #}
+<form method="post" action="{% url 'todo_app:add_task' %}" class="quick-add anim" style="--i: 1">
+  {% csrf_token %}
+  <input type="text" name="name" class="qa-name" maxlength="100" required
+         placeholder="Что нужно сделать?" aria-label="Название задачи">
+  <input type="date" name="date_due" class="qa-date" aria-label="Срок">
+  <button type="submit" class="qa-btn" aria-label="Добавить">
+    <i class="bi bi-plus-lg"></i>
+  </button>
+</form>
+
+{% if total %}
+
+  {# ---------- Активные ---------- #}
+  {% if active_tasks %}
+    <div class="section-title">
+      <i class="bi bi-lightning-charge"></i> В работе
+      <span class="badge-n">{{ active_tasks|length }}</span>
     </div>
-    <div class = "button_delete">
-      <form method="post" action="{% url 'todo_app:delete_task' task.id %}">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary">Удалить задачу</button>
-      </form>
+    <div class="stagger">
+      {% for task in active_tasks %}
+        {% include "partials/task_card.html" %}
+      {% endfor %}
     </div>
+  {% endif %}
+
+  {# ---------- Выполненные ---------- #}
+  {% if done_tasks %}
+    <div class="section-title mt-4">
+      <button class="done-toggle section-title m-0" type="button"
+              data-bs-toggle="collapse" data-bs-target="#doneList"
+              aria-expanded="true" aria-controls="doneList">
+        <i class="bi bi-chevron-down"></i> Выполнено
+        <span class="badge-n">{{ done_tasks|length }}</span>
+      </button>
+    </div>
+    <div class="collapse show" id="doneList">
+      <div class="stagger">
+        {% for task in done_tasks %}
+          {% include "partials/task_card.html" %}
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+{% else %}
+  <div class="empty-state anim" style="--i: 2">
+    <i class="bi bi-clipboard-check"></i>
+    <h2>Задач пока нет</h2>
+    <p class="mb-0">Добавьте первую задачу в поле выше — и начнём!</p>
   </div>
-{% empty %}
-{% endfor %}
+{% endif %}
 
 {% endblock %}

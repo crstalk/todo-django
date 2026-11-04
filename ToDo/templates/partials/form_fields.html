@@ -1,0 +1,21 @@
+{# Рендер полей формы в едином стиле. Ожидает: form #}
+{% if form.non_field_errors %}
+  <div class="alert-form" role="alert">
+    {% for error in form.non_field_errors %}<div><i class="bi bi-exclamation-circle"></i> {{ error }}</div>{% endfor %}
+  </div>
+{% endif %}
+
+{% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
+{% for field in form.visible_fields %}
+  <div class="mb-3{% if field.errors %} has-error{% endif %}">
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.help_text %}
+      <div class="form-text">{{ field.help_text|safe }}</div>
+    {% endif %}
+    {% for error in field.errors %}
+      <div class="field-error"><i class="bi bi-exclamation-circle"></i> {{ error }}</div>
+    {% endfor %}
+  </div>
+{% endfor %}

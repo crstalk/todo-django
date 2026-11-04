@@ -1,26 +1,25 @@
 from django import forms
 
-from .models import Element, Projects, TaskProject
+from .models import Task, Project
 
 
 class TaskForm(forms.ModelForm):
     class Meta:
-        model = Element
-        fields = ['name', 'data_due']
-        labels = {'name': "", 'data_due': "Срок"}
+        model = Task
+        fields = ['name', 'date_due']
+        labels = {'name': "Задача", 'date_due': "Срок"}
+        help_texts = {'date_due': "Необязательно. Задачи на сегодня появятся во вкладке «Сегодня»."}
         widgets = {
-            "data_due": forms.DateInput(attrs={"type": "date"}),
+            "name": forms.TextInput(attrs={"placeholder": "Что нужно сделать?", "autofocus": True}),
+            "date_due": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
         }
+
 
 class ProjectForm(forms.ModelForm):
     class Meta:
-        model = Projects
+        model = Project
         fields = ['name']
-        labels = {'name' : ""}
-
-
-class TaskpForm(forms.ModelForm):
-    class Meta:
-        model = TaskProject
-        fields = ["name"]
-        labels = {'name':''}
+        labels = {'name': "Название проекта"}
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "Например: Ремонт, Учёба, Отпуск", "autofocus": True}),
+        }

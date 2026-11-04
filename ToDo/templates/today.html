@@ -1,5 +1,100 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block title %}Сегодня{% endblock %}
 
 {% block content %}
+
+
+{# ---------- Шапка ---------- #}
+<div class="hero anim">
+  <div class="date-chip">
+    <i class="bi bi-calendar-event"></i> {{ today|date:"l, j E" }}
+  </div>
+  <h1>Сегодня</h1>
+  <div class="sub">
+    {% if total %}
+      Выполнено {{ done_tasks|length }} из {{ total }}
+      {% if not active_tasks %} — день закрыт! 🎉{% endif %}
+    {% else %}
+      На сегодня ничего не запланировано
+    {% endif %}
+    {% if overdue_tasks %} · просрочено: {{ overdue_tasks|length }}{% endif %}
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track" role="progressbar"
+         aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+      <div class="progress-fill" style="width: {{ progress }}%"></div>
+    </div>
+    <span class="progress-label">{{ progress }}%</span>
+  </div>
+</div>
+
+{# ---------- Быстрое добавление: срок сразу = сегодня ---------- #}
+<form method="post" action="{% url 'todo_app:add_task' %}" class="quick-add anim" style="--i: 1">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <input type="hidden" name="date_due" value="{{ today|date:'Y-m-d' }}">
+  <input type="text" name="name" class="qa-name" maxlength="100" required
+         placeholder="Добавить задачу на сегодня…" aria-label="Название задачи">
+  <button type="submit" class="qa-btn" aria-label="Добавить">
+    <i class="bi bi-plus-lg"></i>
+  </button>
+</form>
+
+{# ---------- Просроченные ---------- #}
+{% if overdue_tasks %}
+  <div class="section-title danger">
+    <i class="bi bi-exclamation-triangle"></i> Просрочено
+    <span class="badge-n">{{ overdue_tasks|length }}</span>
+  </div>
+  <div class="stagger">
+    {% for task in overdue_tasks %}
+      {% include "partials/task_card.html" %}
+    {% endfor %}
+  </div>
+  <div class="mb-4"></div>
+{% endif %}
+
+{% if total %}
+
+  {# ---------- На сегодня ---------- #}
+  {% if active_tasks %}
+    <div class="section-title">
+      <i class="bi bi-sun"></i> На сегодня
+      <span class="badge-n">{{ active_tasks|length }}</span>
+    </div>
+    <div class="stagger">
+      {% for task in active_tasks %}
+        {% include "partials/task_card.html" %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {# ---------- Выполненные ---------- #}
+  {% if done_tasks %}
+    <div class="section-title mt-4">
+      <button class="done-toggle section-title m-0" type="button"
+              data-bs-toggle="collapse" data-bs-target="#doneList"
+              aria-expanded="true" aria-controls="doneList">
+        <i class="bi bi-chevron-down"></i> Выполнено
+        <span class="badge-n">{{ done_tasks|length }}</span>
+      </button>
+    </div>
+    <div class="collapse show" id="doneList">
+      <div class="stagger">
+        {% for task in done_tasks %}
+          {% include "partials/task_card.html" %}
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+{% elif not overdue_tasks %}
+  <div class="empty-state anim" style="--i: 2">
+    <i class="bi bi-sun"></i>
+    <h2>Свободный день</h2>
+    <p class="mb-0">Задач со сроком на сегодня нет. Добавьте одну в поле выше.</p>
+  </div>
+{% endif %}
 
 {% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Регистрация{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="form-card narrow anim">
+    <div class="form-icon"><i class="bi bi-person-plus"></i></div>
+    <h1 class="text-center mb-1">Регистрация</h1>
+    <p class="text-center mb-4" style="color: var(--muted); font-weight: 600;">Пара полей — и можно планировать</p>
+
+    <form method="POST" class="form-card-form" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_fields.html" %}
+      <button type="submit" class="btn-save w-100 mt-2">Создать аккаунт <i class="bi bi-arrow-right"></i></button>
+    </form>
+
+    <p class="form-foot mb-0">Уже есть аккаунт? <a href="{% url 'user_auth:login' %}">Войти</a></p>
+  </div>
+</div>
+{% endblock %}

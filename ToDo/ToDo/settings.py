@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'todo_app'
+    'todo_app',
+    'user_auth',
 ]
 
 MIDDLEWARE = [
@@ -55,13 +56,14 @@ ROOT_URLCONF = 'ToDo.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'todo_app.context_processors.active_tasks_count',  # счётчик в навбаре
             ],
         },
     },
@@ -103,9 +105,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 
-TIME_ZONE = 'UTC'
+AUTH_USER_MODEL = 'user_auth.User'  # 'имя_приложения.Модель'
+
+LOGIN_URL = 'user_auth:login'  # куда @login_required отправляет неавторизованных
+LOGIN_REDIRECT_URL = 'todo_app:tasks'  # куда попадаем после входа
+LOGOUT_REDIRECT_URL = 'user_auth:login'  # куда попадаем после выхода
+
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
@@ -116,6 +124,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']  # общие css/js проекта
+
+# Django отдаёт тег "error", а Bootstrap ждёт "danger"
+from django.contrib.messages import constants as message_constants
+MESSAGE_TAGS = {message_constants.ERROR: 'danger'}
 
 
 # Email

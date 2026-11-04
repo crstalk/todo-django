@@ -1,11 +1,62 @@
 {% extends 'base.html' %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Profile</title>
-</head>
-<body>
 
-</body>
-</html>
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+
+<div class="hero anim">
+  <div class="profile-head">
+    <div class="avatar">{{ user.username|first }}</div>
+    <div>
+      <h1 class="mb-1">{{ user.username }}</h1>
+      <div class="sub mb-0">
+        <i class="bi bi-envelope"></i> {{ user.email|default:"Почта не указана" }}
+        &nbsp;·&nbsp; <i class="bi bi-calendar-heart"></i> с нами с {{ user.date_joined|date:"j E Y" }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stat-grid stagger">
+  <div class="stat">
+    <span class="s-icon"><i class="bi bi-list-check"></i></span>
+    <div><div class="s-val" data-count="{{ tasks_total }}">{{ tasks_total }}</div><div class="s-lbl">Всего задач</div></div>
+  </div>
+  <div class="stat">
+    <svg class="ring" viewBox="0 0 40 40" aria-hidden="true">
+      {# окружность r=15.9 имеет длину ≈100, поэтому смещение = 100 - процент #}
+      <circle class="r-bg" cx="20" cy="20" r="15.9"></circle>
+      <circle class="r-fg" cx="20" cy="20" r="15.9" style="stroke-dashoffset: {{ ring_offset }}"></circle>
+    </svg>
+    <div><div class="s-val" data-count="{{ tasks_done }}">{{ tasks_done }}</div><div class="s-lbl">Выполнено · {{ progress }}%</div></div>
+  </div>
+  <div class="stat">
+    <span class="s-icon" {% if tasks_overdue %}style="background: var(--danger-bg); color: var(--danger)"{% endif %}><i class="bi bi-alarm"></i></span>
+    <div><div class="s-val" data-count="{{ tasks_overdue }}">{{ tasks_overdue }}</div><div class="s-lbl">Просрочено</div></div>
+  </div>
+  <div class="stat">
+    <span class="s-icon"><i class="bi bi-folder2"></i></span>
+    <div><div class="s-val" data-count="{{ projects_total }}">{{ projects_total }}</div><div class="s-lbl">Проектов</div></div>
+  </div>
+</div>
+
+<div class="profile-grid">
+  <div class="form-card anim" style="--i: 3">
+    <h2><i class="bi bi-pencil-square"></i> Редактировать профиль</h2>
+    <form method="POST" class="form-card-form" novalidate>
+      {% csrf_token %}
+      {% include "partials/form_fields.html" %}
+      <button type="submit" class="btn-save mt-2"><i class="bi bi-check-lg"></i> Сохранить</button>
+    </form>
+  </div>
+
+  <div class="form-card anim" style="--i: 4">
+    <h2><i class="bi bi-shield-lock"></i> Безопасность</h2>
+    <p style="color: var(--muted); font-weight: 500;">Регулярно меняйте пароль, чтобы аккаунт был в безопасности.</p>
+    <a href="{% url 'user_auth:password_change' %}" class="btn-save text-decoration-none">
+      <i class="bi bi-key"></i> Сменить пароль
+    </a>
+  </div>
+</div>
+
+{% endblock %}

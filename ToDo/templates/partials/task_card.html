@@ -1,0 +1,41 @@
+{# Карточка одной задачи. Ожидает в контексте: task, today #}
+<div class="task-card{% if task.done %} is-done{% elif task.date_due and task.date_due < today %} overdue{% endif %}">
+
+  <form method="post" action="{% url 'todo_app:toggle' task.id %}" class="toggle-form">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button type="submit" class="task-check"
+            aria-label="{% if task.done %}Вернуть в работу{% else %}Отметить выполненной{% endif %}">
+      <i class="bi bi-check-lg"></i>
+    </button>
+  </form>
+
+  <div class="task-body">
+    <span class="task-text">{{ task.name }}</span>
+    <div class="task-meta">
+      {% if task.date_due %}
+        {% if not task.done and task.date_due < today %}
+          <span class="due late"><i class="bi bi-exclamation-circle"></i> Просрочено · {{ task.date_due|date:"d.m.Y" }}</span>
+        {% elif task.date_due == today %}
+          <span class="due today"><i class="bi bi-sun"></i> Сегодня</span>
+        {% else %}
+          <span class="due"><i class="bi bi-calendar3"></i> {{ task.date_due|date:"d.m.Y" }}</span>
+        {% endif %}
+      {% endif %}
+      {% if task.project %}
+        <a class="proj" href="{% url 'todo_app:taskprojects' task.project.id %}"><i class="bi bi-folder2"></i> {{ task.project.name }}</a>
+      {% endif %}
+      <span><i class="bi bi-clock"></i> {{ task.date_added|date:"d.m.Y H:i" }}</span>
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'todo_app:delete_task' task.id %}" class="m-0"
+        data-confirm="Удалить задачу «{{ task.name }}»?">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button type="submit" class="btn-delete" aria-label="Удалить задачу">
+      <i class="bi bi-trash3"></i>
+    </button>
+  </form>
+
+</div>

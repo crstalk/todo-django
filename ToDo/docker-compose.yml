@@ -5,8 +5,8 @@ services:
     env_file: .env                     # берёт POSTGRES_DB, USER, PASSWORD
     volumes:
       - pgdata:/var/lib/postgresql/data   # 📀 «флешка» с данными
-    healthcheck:                       # как понять, что база уже готова
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+    healthcheck: # как понять, что база уже готова
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 5s
       retries: 10
 
@@ -15,11 +15,28 @@ services:
     build: .                           # собрать образ из Dockerfile в этой папке
     env_file: .env
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       db:
         condition: service_healthy     # не стартовать, пока база не готова
     restart: unless-stopped            # если упал, перезапустить
 
+  # 🔒 «Ресепшен»: HTTPS и порты 80/443
+  caddy:
+    image: caddy:2
+    profiles: [ "prod" ]                     # запускается только на сервере
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}           # домен берём из .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro   # наш конфиг (ro = только чтение)
+      - caddy_data:/data                      # тут хранятся сертификаты
+    depends_on:
+      - web
+    restart: unless-stopped
+
 volumes:
-  pgdata:                              # объявляем volume
+  pgdata:
+  caddy_data:

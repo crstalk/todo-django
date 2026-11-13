@@ -8,8 +8,8 @@
 | 2 | Готовим Django к продакшену (секреты, DEBUG, gunicorn, статика) | ✅ |
 | 3 | Пишем Dockerfile и запускаем сайт в контейнере у себя | ✅ |
 | 4 | docker-compose + PostgreSQL | ✅ |
-| 5 | Заливаем код на GitHub | ⏳ в процессе |
-| 6 | Арендуем сервер и запускаем там | |
+| 5 | Заливаем код на GitHub | ✅ https://github.com/crstalk/todo-django |
+| 6 | Арендуем сервер и запускаем там | ✅ http://51.250.40.90:8000 |
 | 7 | Домен + HTTPS | |
 
 ---
@@ -279,3 +279,104 @@ git push -u origin main
 
 ### Правило про секреты
 Если секрет попал в git, его не прячут, а **заменяют на новый**. Старый `django-insecure-...` ключ остался в Initial commit, но на сервере используется новый из `.env`.
+
+✅ Итог урока 5: код на https://github.com/crstalk/todo-django, секретов в репозитории нет.
+
+---
+
+## 🖥️ Урок 6А. VPS + SSH + Docker на сервере
+
+**Сервер** — компьютер в дата-центре, работает 24/7, у него есть публичный IP-адрес. Его берут в аренду.
+**VPS vs PaaS:** выбрали VPS, потому что наш docker-compose работает как есть, а заодно учимся Linux и SSH.
+
+**SSH** — защищённый удалённый терминал.
+| Файл | Аналогия | Показывать? |
+|---|---|---|
+| `id_ed25519.pub` | 🔒 замок | ✅ да, вешаем на сервер |
+| `id_ed25519` | 🔑 ключ | ❌ никогда и никому |
+
+### Шаги
+1. `ssh-keygen -t ed25519 -C "todo-server"` → `cat ~\.ssh\id_ed25519.pub`
+2. Арендовать VPS: **Ubuntu 24.04**, 1 vCPU, 2 ГБ RAM (минимум 1), 15–25 ГБ диск, вставить публичный ключ
+3. `ssh root@IP` → `yes` при первом входе. Выйти с сервера: `exit`
+4. `apt update && apt upgrade -y` (apt — «магазин приложений» Ubuntu)
+5. `curl -fsSL https://get.docker.com | sh` → `docker run hello-world`
+
+### Вариант: Yandex Cloud (Compute Cloud)
+- Оплата поминутная, пока ВМ работает. Есть стартовый грант для новых. Публичный IP оплачивается отдельно.
+- Вход **не под root**: логин задаёшь сам при создании → `ssh artur@IP`, команды администратора через `sudo`.
+- Настройки ВМ: Ubuntu 24.04, 2 vCPU, гарантированная доля **50%**, 2 ГБ RAM, диск 20 ГБ, **НЕ прерываемая**, публичный адрес **Автоматически**, вставить SSH-ключ.
+- Динамический IP меняется после остановки ВМ. Перед уроком 7 сделать статическим (VPC → IP-адреса).
+- Docker: `curl -fsSL https://get.docker.com | sudo sh` → `sudo usermod -aG docker $USER` → `exit` и переподключиться → `docker run hello-world`.
+- Остановленная ВМ не платит за CPU/RAM, но платит за диск и IP.
+
+### Заметки по серверу
+- Строка ввода `arthur@...:~$` означает, что ты на **сервере**, `PS C:\...>` — на своём компьютере. `$` — обычный пользователь, `#` — root.
+- `permission denied ... docker.sock` → нет прав на Docker: `sudo usermod -aG docker $USER` → `exit` → переподключиться. Проверка: `groups`.
+- `command not found` чаще всего означает опечатку. **Tab** дописывает команды, **↑** вызывает прошлую команду.
+- Копирование в терминале: выделить + правая кнопка мыши (или Ctrl+Shift+C). `Ctrl+C` = прервать команду!
+- Сервер: Yandex Cloud, 2 vCPU, 1.9 ГБ RAM, 20 ГБ HDD, пользователь `arthur`.
+
+---
+
+## 🌍 Урок 6Б. Запуск сайта на сервере
+```
+Дома:    код в папке → .env → docker compose up
+Сервер:  git clone   → .env → docker compose up   (то же самое!)
+```
+1. `git clone https://github.com/crstalk/todo-django.git` → `cd todo-django/ToDo`
+2. Новые секреты для сервера: `openssl rand -base64 48` (ключ), `openssl rand -base64 24` (пароль БД)
+3. `nano .env`, в `DJANGO_ALLOWED_HOSTS` = **IP сервера**. nano: `Ctrl+O` Enter — сохранить, `Ctrl+X` — выйти
+4. `docker compose up -d --build` → `docker compose ps`
+5. `docker compose exec web python manage.py createsuperuser`
+6. Открыть `http://IP:8000`, проверить с телефона через мобильный интернет
+
+Если не открывается: `docker compose logs web`. 400 → ALLOWED_HOSTS. Долго грузится → группа безопасности Yandex Cloud закрывает порт.
+Порт 80/443 (без `:8000`) + HTTPS → урок 7.
+
+✅ **Итог урока 6: сайт в интернете: http://51.250.40.90:8000** (gunicorn, DEBUG выключен, статика работает) 🥳
+
+---
+
+## 🔄 Как обновить сайт
+```powershell
+# дома
+git add .
+git commit -m "что изменил"
+git push
+```
+```bash
+# на сервере
+cd ~/todo-django/ToDo
+git pull
+docker compose up -d --build
+```
+Данные сохраняются в volume `pgdata`. **Никогда не запускай на сервере `docker compose down -v`**: эта команда удалит базу.
+
+## ⚠️ Помнить
+- Сайт пока работает по HTTP: пароли идут без шифрования. Это исправит урок 7 (домен + HTTPS).
+- Yandex Cloud списывает деньги, пока ВМ работает. Остановленная ВМ платит только за диск и IP.
+- Перед уроком 7 сделать IP статическим (VPC → IP-адреса).
+
+---
+
+## 🌐 Урок 7А. Домен и DNS — ✅ http://todo-arthur.ru:8000
+- **DNS** — телефонная книга интернета: имя → IP. **A-запись** связывает имя с IPv4.
+- Записи у REG.RU: `@` → 51.250.40.90, `www` → 51.250.40.90. IP в Yandex Cloud сделан статическим.
+- `NXDOMAIN` = домена не существует (или записи ещё не разошлись; ответ «нет» тоже кэшируется).
+- **400 по домену** → домена нет в `DJANGO_ALLOWED_HOSTS`. Исправление на сервере: `.env` → `DJANGO_ALLOWED_HOSTS=todo-arthur.ru,www.todo-arthur.ru,51.250.40.90` → `docker compose up -d --force-recreate web` (код не менялся, поэтому `--build` не нужен).
+
+## 🔒 Урок 7Б. HTTPS через Caddy
+- HTTP — открытка, HTTPS — запечатанный конверт. Сертификат выдаёт Let's Encrypt (бесплатно, автоматически).
+- **Caddy** — обратный прокси («ресепшен»): слушает 80/443, сам получает сертификат, перенаправляет http → https, передаёт запросы в `web:8000`.
+- **Профили Compose:** `profiles: ["prod"]` — сервис запускается только при включённом профиле (на сервере `COMPOSE_PROFILES=prod` в .env).
+- `"127.0.0.1:8000:8000"` — порт 8000 открыт только для своего компьютера, в обход Caddy не попасть.
+- Сертификаты храним в volume `caddy_data`, потому что у Let's Encrypt есть лимиты на выдачу.
+- Django за прокси: `SECURE_PROXY_SSL_HEADER` (иначе CSRF 403 на форме входа), `SESSION/CSRF_COOKIE_SECURE`. Всё это внутри `if DJANGO_HTTPS == '1'`, чтобы дома работал вход по http.
+
+Caddyfile:
+```
+{$DOMAIN}, www.{$DOMAIN} {
+    reverse_proxy web:8000
+}
+```

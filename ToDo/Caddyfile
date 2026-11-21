@@ -1,3 +1,9 @@
 {$DOMAIN}, www.{$DOMAIN} {
-      reverse_proxy web:8000
+    handle_path /listing* {
+        root * /srv/listing
+        file_server
+    }
+    handle {
+        reverse_proxy web : 8000
+    }
   }

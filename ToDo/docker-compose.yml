@@ -33,6 +33,7 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro   # наш конфиг (ro = только чтение)
       - caddy_data:/data                      # тут хранятся сертификаты
+      - /home/arthur/listing:/srv/listing
     depends_on:
       - web
     restart: unless-stopped
